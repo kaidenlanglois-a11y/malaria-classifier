@@ -30,3 +30,12 @@ print("Largest value:", image.max())
 # Look at single pixels: image[row, column] gives that pixel's [red, green, blue].
 print("Top-left corner pixel:", image[0, 0])
 print("Centre pixel:", image[74, 71])
+
+
+# Try out our own loading function from data_loader.py.
+from data_loader import load_image
+
+prepared = load_image(image_path)
+print("Prepared shape:", prepared.shape)
+print("Prepared smallest:", prepared.min())
+print("Prepared largest:", prepared.max())
