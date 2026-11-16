@@ -1,10 +1,12 @@
 """Train the neural network to tell infected cells from healthy ones."""
 
 import random
+from pathlib import Path
 
 from data_loader import load_dataset, split_dataset
 from model import compute_accuracy, compute_loss
 from network import backward, forward, initialise_parameters
+from visualise import save_weight_sheet
 
 # How big a step to take downhill each time.
 LEARNING_RATE = 0.005
@@ -42,6 +44,9 @@ test_images = (test_images - pixel_means) / pixel_spread
 # Start with small random weights.
 parameters = initialise_parameters(train_images.shape[1])
 
+# Keep a copy of the random starting weights, to compare against later.
+starting_weights = parameters["hidden_weights"].copy()
+
 rng = random.Random(0)
 image_count = len(train_labels)
 
@@ -78,3 +83,8 @@ _, train_predictions = forward(train_images, parameters)
 _, test_predictions = forward(test_images, parameters)
 print(f"Training accuracy: {compute_accuracy(train_predictions, train_labels):.1%}")
 print(f"Test accuracy: {compute_accuracy(test_predictions, test_labels):.1%}")
+
+# Save a picture of what training changed in each hidden neuron's weights.
+learned_changes = parameters["hidden_weights"] - starting_weights
+save_weight_sheet(learned_changes, Path("hidden_neurons.png"))
+print("Saved hidden_neurons.png")
