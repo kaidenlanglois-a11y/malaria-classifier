@@ -3,3 +3,6 @@
 
 # Python's cache files, generated automatically when code runs.
 __pycache__/
+
+# The image dataset: too large for Git, and downloadable from the NLM.
+data/
