@@ -5,7 +5,7 @@ from model import compute_accuracy, compute_loss
 from network import backward, forward, initialise_parameters
 
 # How big a step to take downhill each time.
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.005
 
 # How many times to go through the whole training set.
 EPOCHS = 1000
@@ -24,6 +24,14 @@ train_images, train_labels, test_images, test_labels = split_dataset(
 print("Training images:", len(train_labels))
 print("Test images:", len(test_labels))
 
+# Centre the inputs: find each pixel's average and the overall spread,
+# using the training images only.
+pixel_means = train_images.mean(axis=0)
+pixel_spread = train_images.std()
+
+# Shift and scale both sets with the training set's numbers.
+train_images = (train_images - pixel_means) / pixel_spread
+test_images = (test_images - pixel_means) / pixel_spread
 # Start with small random weights.
 parameters = initialise_parameters(train_images.shape[1])
 
