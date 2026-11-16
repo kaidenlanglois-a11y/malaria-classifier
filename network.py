@@ -58,3 +58,39 @@ def forward(images: np.ndarray, parameters: dict) -> tuple[np.ndarray, np.ndarra
 
     # The hidden outputs are returned too, because training will need them.
     return hidden_outputs, predictions
+
+def backward(
+    images: np.ndarray,
+    hidden_outputs: np.ndarray,
+    predictions: np.ndarray,
+    labels: np.ndarray,
+    parameters: dict,
+) -> dict:
+    """Work out the gradient for every weight and bias (backpropagation)."""
+    image_count = len(labels)
+
+    # Stage 1: how far off each final prediction is.
+    errors = predictions - labels
+
+    # Gradients for the output neuron: error x its inputs (the hidden outputs).
+    output_weight_gradients = hidden_outputs.T @ errors / image_count
+    output_bias_gradient = np.mean(errors)
+
+    # Stage 2: pass the blame back. Each hidden neuron's share of an image's
+    # error is that error times the output weight that listened to the neuron.
+    hidden_errors = np.outer(errors, parameters["output_weights"])
+
+    # Neurons that were switched off by ReLU (output of 0) take no blame.
+    hidden_errors = hidden_errors * (hidden_outputs > 0)
+
+    # Stage 3: gradients for the hidden layer: hidden error x its inputs (the pixels).
+    hidden_weight_gradients = images.T @ hidden_errors / image_count
+    hidden_bias_gradients = np.mean(hidden_errors, axis=0)
+
+    # Use the same names as the parameters, so each gradient matches its weight.
+    return {
+        "hidden_weights": hidden_weight_gradients,
+        "hidden_biases": hidden_bias_gradients,
+        "output_weights": output_weight_gradients,
+        "output_bias": output_bias_gradient,
+    }
