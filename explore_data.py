@@ -4,6 +4,8 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+from data_loader import load_dataset, load_image
+
 # Where the dataset lives, relative to the project folder.
 # Capital letters mark a constant: a value that never changes.
 DATA_DIR = Path("data") / "cell_images"
@@ -31,11 +33,15 @@ print("Largest value:", image.max())
 print("Top-left corner pixel:", image[0, 0])
 print("Centre pixel:", image[74, 71])
 
-
 # Try out our own loading function from data_loader.py.
-from data_loader import load_image
-
 prepared = load_image(image_path)
 print("Prepared shape:", prepared.shape)
 print("Prepared smallest:", prepared.min())
 print("Prepared largest:", prepared.max())
+
+# Load a small sample: 100 images from each class.
+images, labels = load_dataset(images_per_class=100)
+print("Images shape:", images.shape)
+print("Labels shape:", labels.shape)
+print("First five labels:", labels[:5])
+print("Last five labels:", labels[-5:])
