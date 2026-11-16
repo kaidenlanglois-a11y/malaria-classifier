@@ -11,10 +11,12 @@ LEARNING_RATE = 0.005
 EPOCHS = 1000
 
 # How many images to load from each class.
-IMAGES_PER_CLASS = 1000
+IMAGES_PER_CLASS = 5000
 
 # The share of images held back for testing.
 TEST_FRACTION = 0.2
+
+print("Loading images...")
 
 # Load a random sample, then set aside a test set the network never trains on.
 images, labels = load_dataset(IMAGES_PER_CLASS)
@@ -32,6 +34,7 @@ pixel_spread = train_images.std()
 # Shift and scale both sets with the training set's numbers.
 train_images = (train_images - pixel_means) / pixel_spread
 test_images = (test_images - pixel_means) / pixel_spread
+
 # Start with small random weights.
 parameters = initialise_parameters(train_images.shape[1])
 
