@@ -30,8 +30,10 @@ def load_image(image_path: Path) -> np.ndarray:
     return pixels.flatten()
 
 
-def load_dataset(images_per_class: int) -> tuple[np.ndarray, np.ndarray]:
-    """Load images from both classes, with a matching label for each."""
+def load_dataset(images_per_class: int, seed: int = 0) -> tuple[np.ndarray, np.ndarray]:
+    """Load a random sample of images from both classes, with a label for each."""
+    # A seeded generator makes the same "random" choices on every run.
+    rng = np.random.default_rng(seed)
     images = []
     labels = []
 
@@ -39,10 +41,29 @@ def load_dataset(images_per_class: int) -> tuple[np.ndarray, np.ndarray]:
     for class_name, label in LABELS.items():
         image_paths = sorted((DATA_DIR / class_name).glob("*.png"))
 
-        # Load only the first few images of this class.
-        for image_path in image_paths[:images_per_class]:
-            images.append(load_image(image_path))
+        # Pick positions at random from the whole folder, with no repeats.
+        chosen = rng.choice(len(image_paths), size=images_per_class, replace=False)
+
+        for index in chosen:
+            images.append(load_image(image_paths[index]))
             labels.append(label)
 
     # Turn the lists into arrays: one row per image.
     return np.array(images), np.array(labels)
+
+
+def split_dataset(
+    images: np.ndarray, labels: np.ndarray, test_fraction: float, seed: int = 0
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Shuffle the dataset and split it into a training set and a test set."""
+    rng = np.random.default_rng(seed)
+
+    # The row numbers 0, 1, 2, ... in a random order.
+    order = rng.permutation(len(labels))
+
+    # The first slice of shuffled rows becomes the test set; the rest is for training.
+    test_size = int(len(labels) * test_fraction)
+    test_rows = order[:test_size]
+    train_rows = order[test_size:]
+
+    return images[train_rows], labels[train_rows], images[test_rows], labels[test_rows]
