@@ -1,0 +1,5 @@
+# The virtual environment: large, and rebuildable from a package list.
+.venv/
+
+# Python's cache files, generated automatically when code runs.
+__pycache__/
