@@ -20,13 +20,13 @@ POOL_SIZE = 2
 # Red, green and blue.
 COLOUR_CHANNELS = 3
 
-# A 3-wide window fits across a 32-wide image in 30 positions.
+# How many positions a window fits across the image: 
 MAP_SIZE = IMAGE_SIZE - FILTER_SIZE + 1
 
-# Pooling in blocks of 2 halves each feature map: 30 becomes 15.
+# Pooling halves the width and height of each feature map.
 POOLED_SIZE = MAP_SIZE // POOL_SIZE
 
-# The number of values the layer hands on per image: 15 x 15 x 8 = 1,800.
+# The number of values the layer hands on per image
 FEATURE_COUNT = POOLED_SIZE * POOLED_SIZE * FILTER_COUNT
 
 
@@ -35,11 +35,11 @@ def initialise_filters(seed: int = 1) -> dict:
     rng = random.Random(seed)
 
     # Each filter has one weight per value in its window:
-    # 3 x 3 pixels x 3 colours = 27.
+    # width x height X colours .
     weights_per_filter = FILTER_SIZE * FILTER_SIZE * COLOUR_CHANNELS
 
     return {
-        # One column of 27 weights per filter: shape (27, FILTER_COUNT).
+        # One column of  weights per filter: shape (weights_per_filter, FILTER_COUNT).
         "filter_weights": random_weights(weights_per_filter, FILTER_COUNT, rng),
         # One bias per filter.
         "filter_biases": np.zeros(FILTER_COUNT),
@@ -47,14 +47,14 @@ def initialise_filters(seed: int = 1) -> dict:
 
 
 def extract_windows(images: np.ndarray) -> np.ndarray:
-    """Cut out every 3 x 3 window of every image, each as a row of 27 numbers."""
+    """Cut out every window of every image, each as a row of  numbers."""
     # Fold each flat image back into a 32 x 32 grid of colour pixels.
     grids = images.reshape(-1, IMAGE_SIZE, IMAGE_SIZE, COLOUR_CHANNELS)
 
     # Slide a 3 x 3 window over the height and width of every image.
     windows = sliding_window_view(grids, (FILTER_SIZE, FILTER_SIZE), axis=(1, 2))
 
-    # Flatten each window, giving shape (images, 30, 30, 27).
+    # Flatten each window, giving shape (images, MAP_SIZE, MAP_SIZE, FILTER_COUNT).
     return windows.reshape(len(grids), MAP_SIZE, MAP_SIZE, -1)
 
 
@@ -79,6 +79,7 @@ def conv_forward(
 
     # The windows and feature maps are returned too, because training will need them.
     return windows, feature_maps, features
+
 
 def enlarge(grid: np.ndarray) -> np.ndarray:
     """Stretch a pooled grid back to feature-map size, repeating each value 2 x 2."""
