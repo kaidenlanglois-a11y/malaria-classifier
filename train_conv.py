@@ -9,10 +9,10 @@ from data_loader import load_dataset, split_dataset
 from model import compute_accuracy, compute_loss
 from network import backward, forward, initialise_parameters
 
-# step size at the begining.
-LEARNING_RATE = 0.01    
+# The step size at the beginning of training.
+LEARNING_RATE = 0.01
 
-# Each epoch, the step size shrinks to this fraction of the one before
+# Each epoch, the step size shrinks to this fraction of the one before.
 LEARNING_RATE_DECAY = 0.95
 
 # How many times to go through the whole training set.
@@ -24,8 +24,15 @@ BATCH_SIZE = 64
 # How many images to load from each class.
 IMAGES_PER_CLASS = 5000
 
-# The share of images held back for testing.
+# The share of all images held back for the final test.
 TEST_FRACTION = 0.2
+
+# The share of the remaining images held back for comparing experiments.
+VALIDATION_FRACTION = 0.2
+
+# Leave this False while experimenting. Set it to True only for the final,
+# one-time measurement, after every setting has been chosen.
+RUN_FINAL_TEST = False
 
 # How many images to push through at once when only predicting.
 PREDICT_BATCH_SIZE = 500
@@ -49,13 +56,19 @@ def predict_all(images: np.ndarray, filters: dict, parameters: dict) -> np.ndarr
     return np.concatenate(predictions)
 
 
-# Load a random sample, then set aside a test set the network never trains on.
+# Load a random sample and set aside the test set.
 print("Loading images...")
 images, labels = load_dataset(IMAGES_PER_CLASS)
 train_images, train_labels, test_images, test_labels = split_dataset(
     images, labels, TEST_FRACTION
 )
+
+# Split what is left into a training set and a validation set.
+train_images, train_labels, validation_images, validation_labels = split_dataset(
+    train_images, train_labels, VALIDATION_FRACTION, seed=1
+)
 print("Training images:", len(train_labels))
+print("Validation images:", len(validation_labels))
 print("Test images:", len(test_labels))
 
 # Centre the inputs: find each pixel's average and the overall spread,
@@ -63,11 +76,12 @@ print("Test images:", len(test_labels))
 pixel_means = train_images.mean(axis=0)
 pixel_spread = train_images.std()
 
-# Shift and scale both sets with the training set's numbers.
+# Shift and scale all three sets with the training set's numbers.
 train_images = (train_images - pixel_means) / pixel_spread
+validation_images = (validation_images - pixel_means) / pixel_spread
 test_images = (test_images - pixel_means) / pixel_spread
 
-# Start with small random weights for both halves. The back half now takes
+# Start with small random weights for both halves. The back half takes
 # the filters' features as its input, not raw pixels.
 filters = initialise_filters()
 parameters = initialise_parameters(FEATURE_COUNT)
@@ -108,13 +122,23 @@ for epoch in range(EPOCHS):
         for name in filters:
             filters[name] = filters[name] - learning_rate * filter_gradients[name]
 
-    # After each epoch, measure the loss over the whole training set.
+    # After each epoch, check progress on the training and validation sets.
     train_predictions = predict_all(train_images, filters, parameters)
+    validation_predictions = predict_all(validation_images, filters, parameters)
     loss = compute_loss(train_predictions, train_labels)
-    print(f"Epoch {epoch}: loss {loss:.4f} (step size {learning_rate:.5f})")
+    validation_accuracy = compute_accuracy(validation_predictions, validation_labels)
+    print(
+        f"Epoch {epoch}: loss {loss:.4f}, "
+        f"validation accuracy {validation_accuracy:.1%} "
+        f"(step size {learning_rate:.5f})"
+    )
 
-# Grade the network on the images it trained on, and on images it has never seen.
-train_predictions = predict_all(train_images, filters, parameters)
-test_predictions = predict_all(test_images, filters, parameters)
-print(f"Training accuracy: {compute_accuracy(train_predictions, train_labels):.1%}")
-print(f"Test accuracy: {compute_accuracy(test_predictions, test_labels):.1%}")
+# Final scores. The validation score is the one to compare between experiments.
+train_accuracy = compute_accuracy(train_predictions, train_labels)
+print(f"Training accuracy: {train_accuracy:.1%}")
+print(f"Validation accuracy: {validation_accuracy:.1%}")
+
+# The test set is only touched when explicitly asked for.
+if RUN_FINAL_TEST:
+    test_predictions = predict_all(test_images, filters, parameters)
+    print(f"Test accuracy: {compute_accuracy(test_predictions, test_labels):.1%}")
