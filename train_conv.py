@@ -28,7 +28,7 @@ LEARNING_RATE_DECAY = 0.95
 MOMENTUM = 0.9
 
 # How many times to go through the whole training set.
-EPOCHS = 20
+EPOCHS = 30
 
 # How many images the network looks at before each update.
 BATCH_SIZE = 64
@@ -38,7 +38,7 @@ FIRST_FILTER_COUNT = 8
 SECOND_FILTER_COUNT = 16
 
 # How many images to load from each class.
-IMAGES_PER_CLASS = 5000
+IMAGES_PER_CLASS = 12000
 
 # The share of all images held back for the final test.
 TEST_FRACTION = 0.2
