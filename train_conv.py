@@ -9,11 +9,14 @@ from data_loader import load_dataset, split_dataset
 from model import compute_accuracy, compute_loss
 from network import backward, forward, initialise_parameters
 
-# How big a step to take downhill each time.
-LEARNING_RATE = 0.01
+# step size at the begining.
+LEARNING_RATE = 0.01    
+
+# Each epoch, the step size shrinks to this fraction of the one before
+LEARNING_RATE_DECAY = 0.95
 
 # How many times to go through the whole training set.
-EPOCHS = 20
+EPOCHS = 30
 
 # How many images the network looks at before each update.
 BATCH_SIZE = 64
@@ -73,6 +76,9 @@ rng = random.Random(0)
 image_count = len(train_labels)
 
 for epoch in range(EPOCHS):
+    # Take smaller steps as training goes on, to settle into the valley.
+    learning_rate = LEARNING_RATE * LEARNING_RATE_DECAY**epoch
+
     # Visit the training images in a fresh random order each epoch.
     order = list(range(image_count))
     rng.shuffle(order)
@@ -98,14 +104,14 @@ for epoch in range(EPOCHS):
 
         # 3. Take a small step downhill in both halves.
         for name in parameters:
-            parameters[name] = parameters[name] - LEARNING_RATE * gradients[name]
+            parameters[name] = parameters[name] - learning_rate * gradients[name]
         for name in filters:
-            filters[name] = filters[name] - LEARNING_RATE * filter_gradients[name]
+            filters[name] = filters[name] - learning_rate * filter_gradients[name]
 
     # After each epoch, measure the loss over the whole training set.
     train_predictions = predict_all(train_images, filters, parameters)
     loss = compute_loss(train_predictions, train_labels)
-    print(f"Epoch {epoch}: loss {loss:.4f}")
+    print(f"Epoch {epoch}: loss {loss:.4f} (step size {learning_rate:.5f})")
 
 # Grade the network on the images it trained on, and on images it has never seen.
 train_predictions = predict_all(train_images, filters, parameters)
