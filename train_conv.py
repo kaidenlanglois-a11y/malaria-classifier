@@ -1,13 +1,14 @@
 """Train the convolutional network to tell infected cells from healthy ones."""
 
 import random
+from pathlib import Path
 
 import numpy as np
-
 from conv import FEATURE_COUNT, conv_backward, conv_forward, initialise_filters
 from data_loader import load_dataset, split_dataset
 from model import compute_accuracy, compute_loss
 from network import backward, forward, initialise_parameters
+from visualise import save_filter_sheet
 
 # The step size at the beginning of training.
 LEARNING_RATE = 0.01
@@ -142,3 +143,18 @@ print(f"Validation accuracy: {validation_accuracy:.1%}")
 if RUN_FINAL_TEST:
     test_predictions = predict_all(test_images, filters, parameters)
     print(f"Test accuracy: {compute_accuracy(test_predictions, test_labels):.1%}")
+
+# Save everything needed to use the trained network later without retraining:
+# both sets of weights, plus the numbers used to centre the inputs.
+np.savez(
+    "model_weights.npz",
+    **filters,
+    **parameters,
+    pixel_means=pixel_means,
+    pixel_spread=pixel_spread,
+)
+print("Saved model_weights.npz")
+
+# Save a picture of the small pattern each filter responds to.
+save_filter_sheet(filters["filter_weights"], Path("conv_filters.png"))
+print("Saved conv_filters.png")
