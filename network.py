@@ -87,10 +87,16 @@ def backward(
     hidden_weight_gradients = images.T @ hidden_errors / image_count
     hidden_bias_gradients = np.mean(hidden_errors, axis=0)
 
+    # Stage 4: pass the blame back to the inputs themselves, so that an earlier
+    # layer can learn. Each input's share is the hidden errors times the weights
+    # that carried that input forward.
+    input_errors = hidden_errors @ parameters["hidden_weights"].T
+
     # Use the same names as the parameters, so each gradient matches its weight.
     return {
         "hidden_weights": hidden_weight_gradients,
         "hidden_biases": hidden_bias_gradients,
         "output_weights": output_weight_gradients,
         "output_bias": output_bias_gradient,
+        "input_errors": input_errors,
     }
