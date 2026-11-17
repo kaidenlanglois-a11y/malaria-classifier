@@ -22,7 +22,7 @@ EPOCHS = 30
 BATCH_SIZE = 64
 
 # How many images to load from each class.
-IMAGES_PER_CLASS = 5000
+IMAGES_PER_CLASS = 12000
 
 # The share of all images held back for the final test.
 TEST_FRACTION = 0.2
