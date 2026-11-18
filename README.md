@@ -2,8 +2,10 @@
 
 A neural network that tells malaria-infected red blood cells from healthy ones,
 built from scratch in NumPy with no machine learning library. I wrote the forward
-pass, the loss, backpropagation, convolution, pooling and the training loop by
-hand as a way to learn how neural networks work.
+pass, the loss, backpropagation, convolution, pooling, momentum and the training
+loop by hand as a way to learn how neural networks work.
+
+**Final result: 94.9% accuracy on 4,800 cell images the model never saw.**
 
 ## Results
 
@@ -18,11 +20,24 @@ Each model is scored on cell images it never saw during training.
 | + mini-batch training | 71.7% |
 | Convolution layer with max pooling | 79.4% |
 | + 24,000 images | 83.8% |
+| Second convolution layer (back on the smaller image set) | 79.4% |
+| + momentum | 87.7% |
+| + 24,000 images | 94.9% |
+| **Final score on the held-back test set** | **94.9%** |
 
-The last two rows are validation accuracy. From that point on, a separate test
-set is held back and will be used once, for a final score, after all the
-settings have been chosen. Earlier rows were measured on a test set that was
-also used to compare experiments, so they are slightly optimistic.
+The first five rows were measured on a test set that was also used to compare
+experiments, so they are slightly optimistic. From the convolution rows on, the
+scores are validation accuracy: a separate slice of the data used to choose
+settings such as the learning rate.
+
+The last row is the honest one. The test set of 4,800 images was held back the
+whole time, played no part in any decision, and was scored exactly once, after
+every setting had been fixed. It matched the validation score, which means the
+model was not over-tuned to the validation images.
+
+Two things stood out along the way. A second convolution layer gave no gain at
+all with plain gradient descent; it only paid off once momentum was added. And
+more data helped every time it was tried.
 
 ## What the networks learned
 
@@ -40,11 +55,12 @@ dense network needs separate weights for every position, so it cannot learn
 
 ### Convolutional network
 
-Each tile is one filter: a 3 x 3 window of weights that slides across the whole
-image. The same purple-against-green contrast appears, now as small local
-patterns that can be detected at any position in the cell.
+Each tile is one filter from the first layer: a 3 x 3 window of weights that
+slides across the whole image. The same purple-against-green contrast appears,
+now as small local patterns that can be detected at any position in the cell.
+The second layer combines these small patterns into larger ones.
 
-![The eight convolution filters](conv_filters.png)
+![The eight first-layer convolution filters](conv_filters.png)
 
 ## How it works
 
@@ -54,8 +70,9 @@ patterns that can be detected at any position in the cell.
 - `conv.py` holds the convolution layer: filters, max pooling, and their backpropagation.
 - `train.py` trains the single neuron.
 - `train_network.py` trains the dense network with mini-batch gradient descent.
-- `train_conv.py` trains the convolutional network, with learning rate decay and
-  a validation set.
+- `train_conv.py` trains the final model: two convolution layers and a dense
+  layer, with momentum, learning rate decay, and separate training, validation
+  and test sets (15,360 / 3,840 / 4,800 images).
 - `visualise.py` turns learned weights into pictures.
 
 ## Running it
@@ -78,6 +95,10 @@ patterns that can be detected at any position in the cell.
    python train_conv.py
    ```
 
+   To score the held-back test set as well, set `RUN_FINAL_TEST = True` at the
+   top of `train_conv.py`. It is off by default so the test set is not used
+   while experimenting.
+
 ## Data
 
 The images come from the US National Library of Medicine's malaria dataset:
@@ -86,6 +107,5 @@ uninfected.
 
 ## Next steps
 
-- Add a second convolution layer so filters can combine small patterns into larger ones.
 - Draw feature maps to show where each filter fires on a cell.
-- Report a final score on the held-back test set.
+- Look at the cells the model gets wrong to see what they have in common.
